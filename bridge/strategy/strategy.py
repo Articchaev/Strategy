@@ -81,3 +81,24 @@ class Strategy:
         - actions[9] = Actions.BallGrab(0.0)
                 The robot number 9 grabs the ball at an angle of 0.0 (it looks to the right, along the OX axis)
         """
+        # a = field.enemies[5].get_pos()
+        # b = field.allies[3].get_pos()
+        # actions[0] = Actions.GoToPoint((a+b)/2, (-a-b).arg())
+        # actions[1] = Actions.GoToPoint((a+b*3)/4, (-a-b*3).arg())
+        # actions[2] = Actions.GoToPoint((a*3+b)/4, (-a*3-b).arg())
+        a = field.enemy_goal.up + aux.Point(0,-50)
+        b = field.enemy_goal.down + aux.Point(0,50)
+        c = field.enemies[5].get_pos()
+        d = field.allies[3].get_pos()
+        # field.strategy_image.draw_circle(a, (255,0,255), 20)
+        # field.strategy_image.draw_circle(b, (255,0,255), 20)
+        e = aux.get_angle_between_points(a, d, c)
+        f = aux.get_angle_between_points(c, d, b)
+        if (e<f):
+            actions[3] = Actions.Kick(a)
+            field.strategy_image.draw_circle(a, (255,0,255), 20)
+        else:
+            actions[3] = Actions.Kick(b)
+            field.strategy_image.draw_circle(b, (255,0,255), 20)
+
+        
