@@ -67,7 +67,7 @@ class Strategy:
         - field.allies[8].get_pos(): aux.Point -   coordinates  of the 8th  robot from the allies
         - field.enemies[14].get_angle(): float - rotation angle of the 14th robot from the opponents
 
-        - field.ally_goal.center: Point - center of the ally goal
+        - field.ally_goal.center: Point - center of the ally goalt
         - field.enemy_goal.hull: list[Point] - polygon around the enemy goal area
 
 
@@ -81,24 +81,23 @@ class Strategy:
         - actions[9] = Actions.BallGrab(0.0)
                 The robot number 9 grabs the ball at an angle of 0.0 (it looks to the right, along the OX axis)
         """
-        # a = field.enemies[5].get_pos()
-        # b = field.allies[3].get_pos()
-        # actions[0] = Actions.GoToPoint((a+b)/2, (-a-b).arg())
-        # actions[1] = Actions.GoToPoint((a+b*3)/4, (-a-b*3).arg())
-        # actions[2] = Actions.GoToPoint((a*3+b)/4, (-a*3-b).arg())
-        a = field.enemy_goal.up + aux.Point(0,-50)
-        b = field.enemy_goal.down + aux.Point(0,50)
-        c = field.enemies[5].get_pos()
-        d = field.allies[3].get_pos()
-        # field.strategy_image.draw_circle(a, (255,0,255), 20)
-        # field.strategy_image.draw_circle(b, (255,0,255), 20)
-        e = aux.get_angle_between_points(a, d, c)
-        f = aux.get_angle_between_points(c, d, b)
-        if (e<f):
-            actions[3] = Actions.Kick(a)
-            field.strategy_image.draw_circle(a, (255,0,255), 20)
+        vb = field.ball.get_vel()
+        X = field.ball.get_pos()
+        a = field.ally_goal.up
+        b = field.ally_goal.down
+        Defence = aux.get_line_intersection(X, X + vb, a + aux.Point(100, 0), b + aux.Point(100, 0), 'RS')
+        Defence2 = aux.get_line_intersection(X, X+vb, a, aux.Point(100, 0) + a)
+        Defence3 = aux.get_line_intersection(X, X+vb, b, aux.Point(100, 0) + b)
+        if Defence!=None and vb.mag()>50:
+            actions[field.gk_id] = Actions.GoToPoint(Defence, 0)
+        elif Defence2!=None and vb.mag()>50:
+            actions[field.gk_id] = Actions.GoToPoint(Defence2, 0)
+        elif Defence3!=None and vb.mag()>50:
+            actions[field.gk_id] = Actions.GoToPoint(Defence3, 0)
         else:
-            actions[3] = Actions.Kick(b)
-            field.strategy_image.draw_circle(b, (255,0,255), 20)
+            actions[field.gk_id] = Actions.GoToPoint((a + b)/2 + aux.Point(100, 0), 0)
+        
+
+
 
         
