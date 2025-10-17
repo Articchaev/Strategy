@@ -81,21 +81,71 @@ class Strategy:
         - actions[9] = Actions.BallGrab(0.0)
                 The robot number 9 grabs the ball at an angle of 0.0 (it looks to the right, along the OX axis)
         """
+        
+        self.defender(field, actions)
+        if field.ally_color == const.Color.BLUE:
+            self.Kick(field, actions, False)
+
+
+
+    def defender(self, field: fld.Field, actions: list[Optional[Action]]):
         vb = field.ball.get_vel()
         X = field.ball.get_pos()
         a = field.ally_goal.up
         b = field.ally_goal.down
-        Defence = aux.get_line_intersection(X, X + vb, a + aux.Point(100, 0), b + aux.Point(100, 0), 'RS')
-        Defence2 = aux.get_line_intersection(X, X+vb, a, aux.Point(100, 0) + a)
-        Defence3 = aux.get_line_intersection(X, X+vb, b, aux.Point(100, 0) + b)
+        Defence = aux.get_line_intersection(X, X + vb, a + field.ally_goal.eye_forw*100, b + field.ally_goal.eye_forw*100, 'RS')
+        Defence2 = aux.get_line_intersection(X, X+vb, a, field.ally_goal.eye_forw*100 + a)
+        Defence3 = aux.get_line_intersection(X, X+vb, b, field.ally_goal.eye_forw*100 + b)
         if Defence!=None and vb.mag()>50:
-            actions[field.gk_id] = Actions.GoToPoint(Defence, 0)
+            actions[field.gk_id] = Actions.GoToPointIgnore(Defence, field.ally_goal.eye_forw.arg())
         elif Defence2!=None and vb.mag()>50:
-            actions[field.gk_id] = Actions.GoToPoint(Defence2, 0)
+            actions[field.gk_id] = Actions.GoToPointIgnore(Defence2, field.ally_goal.eye_forw.arg())
         elif Defence3!=None and vb.mag()>50:
-            actions[field.gk_id] = Actions.GoToPoint(Defence3, 0)
+            actions[field.gk_id] = Actions.GoToPointIgnore(Defence3, field.ally_goal.eye_forw.arg())
         else:
-            actions[field.gk_id] = Actions.GoToPoint((a + b)/2 + aux.Point(100, 0), 0)
+            actions[field.gk_id] = Actions.GoToPointIgnore((a + b)/2 + field.ally_goal.eye_forw*100, field.ally_goal.eye_forw.arg())
+        
+            if aux.is_point_inside_poly(X, field.ally_goal.hull) == True:
+                actions[field.gk_id] = Actions.Kick(aux.Point(0, 0))
+
+    def Kick(self, field: fld.Field, actions: list[Optional[Action]], ally_enemy: bool, Index: int):
+        A = aux.Point(0, 75)
+        if ally_enemy == True:
+            a = field.ally_goal.up
+            b = field.ally_goal.down
+            goal1 = a + A
+            goal2 = b - A
+        else:
+            a = field.enemy_goal.up
+            b = field.enemy_goal.down
+            goal1 = a - A
+            goal2 = b + A
+        Enemy_Goalkeeper = field.enemies[field.enemy_gk_id].get_pos()
+        attacker = field.ball.get_pos()
+        angle1 = aux.get_angle_between_points(goal1, attacker, Enemy_Goalkeeper)
+        angle2 = aux.get_angle_between_points(Enemy_Goalkeeper, attacker, goal2)
+        if (abs(angle1)>abs(angle2)):
+            actions[Index] = Actions.Kick(goal1)
+            # field.strategy_image.draw_circle(goal1, (255, 0, 255), 20)
+        else:
+            actions[Index] = Actions.Kick(goal2)
+            # field.strategy_image.draw_circle(goal2, (255, 0, 255), 20)
+    def Pas(self, field: fld.Field, actions: list[Optional[Action]]):
+        Atacker1 = field.allies[1].get_pos()
+        Atacker2 = field.allies[2].get_pos()
+        a = field.enemy_goal.up
+        b = field.enemy_goal.down
+        A = aux.Point(-1000, -100)
+        goal1 = a - A
+        goal2 = b + A
+        Ball = field.ball.get_pos()
+        if Ball.y() >= 0:
+            
+            actions[1] = Actions.Kick(Atacker2)
+            actions[1] = Actions.GoToPoint(goal1)
+            
+
+        
         
 
 
