@@ -18,6 +18,7 @@ class Strategy:
         self,
     ) -> None:
         self.we_active = False
+        
 
     def process(self, field: fld.Field) -> list[Optional[Action]]:
         """Game State Management"""
@@ -82,9 +83,10 @@ class Strategy:
                 The robot number 9 grabs the ball at an angle of 0.0 (it looks to the right, along the OX axis)
         """
         
-        self.defender(field, actions)
-        if field.ally_color == const.Color.BLUE:
-            self.Kick(field, actions, False)
+        self.Pas(field, actions, 1, 2, aux.Point(1000, 1000), aux.Point(0,0))
+        
+        
+
 
 
 
@@ -108,6 +110,12 @@ class Strategy:
             if aux.is_point_inside_poly(X, field.ally_goal.hull) == True:
                 actions[field.gk_id] = Actions.Kick(aux.Point(0, 0))
 
+    def BallGet(self, n: int, field: fld.Field, actions: list[Optional[Action]]):
+        vb = field.ball.get_vel()
+        X = field.ball.get_pos()
+        A = field.allies[n].get_pos()
+        actions[n] = Actions.GoToPoint(aux.closest_point_on_line(X, X+vb, A, "L"), (-vb).arg())
+
     def Kick(self, field: fld.Field, actions: list[Optional[Action]], ally_enemy: bool, Index: int):
         A = aux.Point(0, 75)
         if ally_enemy == True:
@@ -130,21 +138,35 @@ class Strategy:
         else:
             actions[Index] = Actions.Kick(goal2)
             # field.strategy_image.draw_circle(goal2, (255, 0, 255), 20)
-    def Pas(self, field: fld.Field, actions: list[Optional[Action]]):
-        Atacker1 = field.allies[1].get_pos()
-        Atacker2 = field.allies[2].get_pos()
-        a = field.enemy_goal.up
-        b = field.enemy_goal.down
-        A = aux.Point(-1000, -100)
-        goal1 = a - A
-        goal2 = b + A
+    def Pas(self, field: fld.Field, actions: list[Optional[Action]], AT1: int, AT2: int, A: aux.Point, B: aux.Point):
+        Atacker1 = field.allies[AT1].get_pos()
+        Atacker2 = field.allies[AT2].get_pos()
         Ball = field.ball.get_pos()
-        if Ball.y() >= 0:
-            
-            actions[1] = Actions.Kick(Atacker2)
-            actions[1] = Actions.GoToPoint(goal1)
-            
+        AbsAngle2 = (Atacker1 - Atacker2).arg()
+        AbsAngle1 = (Atacker2 - Atacker1).arg()
+        BAt1 = Atacker1 - Ball
+        BAt2 = Atacker2 - Ball
 
+        if BAt1.mag()<BAt2.mag(): 
+            if field.ball.get_vel().mag() >= 150 and aux.scal_mult(field.ball.get_vel(), Atacker1-Atacker2)/(Atacker1-Atacker2).mag() >= -10:
+                self.BallGet(AT1, field, actions)
+                actions[AT2] = Actions.GoToPoint(B, AbsAngle2)
+            elif field.ball.get_vel().mag()<=100 or BAt2.mag() <=200:
+                actions[AT1] = Actions.Kick(B)
+                actions[AT2] = Actions.GoToPoint(B, AbsAngle2)
+            else:
+                actions[AT1] = Actions.GoToPoint(A, AbsAngle1)
+                actions[AT2] = Actions.GoToPoint(B, AbsAngle2)
+        else:
+            if field.ball.get_vel().mag() >= 150 and aux.scal_mult(field.ball.get_vel(), Atacker1-Atacker2)/(Atacker1-Atacker2).mag() <= 10:
+                self.BallGet(AT2,field, actions)
+                actions[AT1] = Actions.GoToPoint(A, AbsAngle1)
+            elif field.ball.get_vel().mag()<=100 or BAt1.mag() <=200:
+                actions[AT2] = Actions.Kick(A)
+                actions[AT1] = Actions.GoToPoint(A, AbsAngle1)
+            else:
+                actions[AT2] = Actions.GoToPoint(B, AbsAngle2)
+                actions[AT1] = Actions.GoToPoint(A, AbsAngle1)
         
         
 
